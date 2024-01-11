@@ -1,4 +1,4 @@
-const amount = 10;
+const amount = express.argv[2];
 
 if(amount > 10){
     console.log("Large number!");
