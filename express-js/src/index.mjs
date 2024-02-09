@@ -31,10 +31,13 @@ app.get("/users", (request, response) => {
     query: { filter, value },
   } = request;
   // when filter and value are undefined
-  if (!filter || !value) return response.send(users);
+  if (!filter && !value) return response.send(users);
 
   if (filter && value)
     return response.send(users.filter((user) => user[filter].includes(value)));
+
+  return response.send(users)
+
 });
 
 
