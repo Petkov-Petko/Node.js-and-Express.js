@@ -1,4 +1,4 @@
-import express from "express";
+import express, { request, response } from "express";
 
 const app = express();
 
@@ -8,20 +8,49 @@ app.listen(PORT, () => {
   console.log(`Running on Port ${PORT}`); // Рънваме сървър на http://localhost:3000/
 });
 
+const users = [
+  { id: 1, username: "Petko", displayName: "Pecata" },
+  { id: 2, username: "Gosho", displayName: "Gogata" },
+  { id: 3, username: "Huliq", displayName: "Huli" },
+];
 app.get("/", (request, response) => {
-  response.status(201).send("Hello, World"); // Ако статуса е успешен пращаме Hello, World
+  response.status(201).send("Hello, World"); // Правим статуса на 201 и пращаме Hello, World
   // response.send("Hello") // Можем и без статуса
 });
 
+/**
+ * query = всичко след ? в URL-a ПР: http://localhost:3000/users?filter=petko
+ * 
+ * с този код можем да пуснем query със ?filter=username&value=et и ще ни върне всички обекти който
+ * имат et във username-а си
+ * ако не предоставим филтер и валуе ще ни върне целия аррей със хора
+ */
 app.get("/users", (request, response) => {
-  response.send([
-    { id: 1, username: "Petko", displayName: "Pecata" },
-    { id: 2, username: "Gosho", displayName: "Gogata" },
-    { id: 3, username: "Huliq", displayName: "Huli" },
-  ]);
+  // Query Params
+  const {
+    query: { filter, value },
+  } = request;
+  // when filter and value are undefined
+  if (!filter || !value) return response.send(users);
+
+  if (filter && value)
+    return response.send(users.filter((user) => user[filter].includes(value)));
 });
 
+
+
 // Route Params
-app.get("/users/:any", (request, response) => {
-    console.log(request.params); // Каквото напишем във URL на мястото на :id ще ни го логнме в конзолата като { any: 'waea' }
-})
+app.get("/users/:id", (request, response) => {
+  console.log(request.params); // Каквото напишем във URL на мястото на :id ще ни го логнме в конзолата като { id: 'waea' }
+  const parsedId = parseInt(request.params.id);
+  if (isNaN(parsedId)) {
+    return response.status(400).send("Bad request");
+  }
+
+  const findUser = users.find((user) => user.id === parsedId);
+  if (!findUser) return response.sendStatus(404);
+  // Ако нмяма човек с това ид ще даде Not Found и ще направи статува 404
+  else {
+    return response.send(findUser.username);
+  } // Ако сложим 3 след users/ ще ни даде Huliq
+});
