@@ -2,6 +2,8 @@ import express, { request, response } from "express";
 
 const app = express();
 
+app.use(express.json())
+
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
@@ -20,10 +22,10 @@ app.get("/", (request, response) => {
 
 /**
  * query = всичко след ? в URL-a ПР: http://localhost:3000/users?filter=petko
- * 
+ *
  * с този код можем да пуснем query със ?filter=username&value=et и ще ни върне всички обекти който
  * имат et във username-а си
- * ако не предоставим филтер и валуе ще ни върне целия аррей със хора
+ * ако не предоставим филтер и валуе или само едното ще ни върне целия аррей със хора
  */
 app.get("/users", (request, response) => {
   // Query Params
@@ -36,11 +38,25 @@ app.get("/users", (request, response) => {
   if (filter && value)
     return response.send(users.filter((user) => user[filter].includes(value)));
 
-  return response.send(users)
-
+  return response.send(users);
 });
 
+// Post Requests
+/*  Първо си правим app.use(express.json()) най отгоре на файла.
 
+    Чрез thunder Clien extention пускаме post request със примерни данни:
+  {"username":"koko"}
+  вземаме тези данни и към тях конкатенираме id като то е +1 от последния аррей ot users
+  {
+  "id": 4,
+  "username": "koko"}
+ */
+app.post("/users", (request, response) => {
+    const { body } = request;
+    const newUser = {id:users[users.length - 1].id + 1, ...body}
+    users.push(newUser)
+    return response.send(newUser) 
+})
 
 // Route Params
 app.get("/users/:id", (request, response) => {
