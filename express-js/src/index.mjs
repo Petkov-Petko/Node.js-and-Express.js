@@ -1,5 +1,6 @@
 import express, { request, response } from "express";
-
+import { query, validationResult, body, matchedData, checkSchema } from "express-validator"
+import { createUserValidationSchema } from "./utils/validationSchemas.mjs"
 const app = express();
 
 app.use(express.json());
@@ -21,14 +22,14 @@ app.get("/", (request, response) => {
 });
 
 /**
+ * //                   Query Params
  * query = всичко след ? в URL-a ПР: http://localhost:3000/users?filter=petko
  *
  * с този код можем да пуснем query със ?filter=username&value=et и ще ни върне всички обекти който
  * имат et във username-а си
  * ако не предоставим филтер и валуе или само едното ще ни върне целия аррей със хора
  */
-app.get("/users", (request, response) => {
-  // Query Params
+app.get("/users",query('filter').isString(), (request, response) => {
   const {
     query: { filter, value },
   } = request;
@@ -41,7 +42,31 @@ app.get("/users", (request, response) => {
   return response.send(users);
 });
 
-// Post Requests
+//                  Middlewere
+/* Можем да чеинваме колкото искаме функции като ги разделяме със ключовата дума 
+next() за да бъде достъпна всяка една.
+*/
+
+// global use
+const loginMiddlewere = (request, response, next) => {
+  console.log(`${request.method} - ${request.url}`);
+  next();
+};
+// app.use(loginMiddlewere);
+
+// local use
+app.get(
+  "/middle",
+  (request, response, next) => {
+    console.log("First thing to do.");
+    next();
+  },
+  (request, response) => {
+    response.status(201).send("Second thing.");
+  }
+);
+
+//                    Post Requests
 /*  Първо си правим app.use(express.json()) най отгоре на файла.
 
     Чрез thunder Clien extention пускаме post request със примерни данни:
@@ -50,15 +75,22 @@ app.get("/users", (request, response) => {
   {
   "id": 4,
   "username": "koko"}
+
+  със checkSchema(createUserValidationSchema) далидираме инпута в зависимост какви
+  валидации сме сложили във файла си.
  */
-app.post("/users", (request, response) => {
+app.post("/users",checkSchema(createUserValidationSchema), (request, response) => {
   const { body } = request;
+  const result = validationResult(request);
+  console.log(result);
+
+  if(!result.isEmpty()) return response.status(400).send({errors: result.array()})
   const newUser = { id: users[users.length - 1].id + 1, ...body };
   users.push(newUser);
   return response.send(newUser);
 });
 
-// Route Params
+//                       Route Params
 app.get("/users/:id", (request, response) => {
   console.log(request.params); // Каквото напишем във URL на мястото на :id ще ни го логнме в конзолата като { id: 'waea' }
   const parsedId = parseInt(request.params.id);
@@ -74,7 +106,7 @@ app.get("/users/:id", (request, response) => {
   } // Ако сложим 3 след users/ ще ни даде Huliq
 });
 
-// Put Requests
+//                  Put Requests
 /* 
   На мястото на :id пишем индекса на обекта който искаме да променим ПР:2
   и подаваме put request пр: 
@@ -102,7 +134,7 @@ app.put("/users/:id", (request, response) => {
   return response.sendStatus(200);
 });
 
-// Patch Requests
+//                             Patch Requests
 /* Като put но ни позволява да ъпдейтнем дадена част. А не всичко.
  */
 
@@ -125,17 +157,17 @@ app.patch("/users/:id", (request, response) => {
   return response.sendStatus(200);
 });
 
-// Delete Request
+//                              Delete Request
 
 app.delete("/users/:id", (request, response) => {
   const {
     params: { id },
   } = request;
-  const parsedId = parseInt(id)
+  const parsedId = parseInt(id);
   if (isNaN(parsedId)) return response.sendStatus(404);
 
-  const userIndex = users.findIndex((user) => user.id === parsedId) 
-  if(userIndex === -1) return response.sendStatus(404);
+  const userIndex = users.findIndex((user) => user.id === parsedId);
+  if (userIndex === -1) return response.sendStatus(404);
 
   /* Трием целия обект Пр: 
     http://localhost:3000/users/2
@@ -143,5 +175,5 @@ app.delete("/users/:id", (request, response) => {
   */
   users.splice(userIndex, 1);
 
-  return response.sendStatus(200)
+  return response.sendStatus(200);
 });
