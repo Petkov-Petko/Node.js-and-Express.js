@@ -70,7 +70,7 @@ app.get("/users/:id", (request, response) => {
   if (!findUser) return response.sendStatus(404);
   // Ако нмяма човек с това ид ще даде Not Found и ще направи статува 404
   else {
-    return response.send(findUser.username);
+    return response.send(findUser);
   } // Ако сложим 3 след users/ ще ни даде Huliq
 });
 
@@ -82,21 +82,45 @@ app.get("/users/:id", (request, response) => {
   "username": "Gogo",
   "displayName":"Gogata"
 }
-и така сменямае стойностите. На обект със индекс 2
+и така сменямае цялата стойностите. На обект със индекс 2
 */
 app.put("/users/:id", (request, response) => {
+  // Дестукторираме request body object
+  const {
+    body,
+    params: { id },
+  } = request;
+
+  const parsedId = parseInt(id); // Правим го number.
+  if (isNaN(parsedId)) return response.sendStatus(404);
+
+  const findUserIndex = users.findIndex((user) => user.id === parsedId); // 0 ili -1
+
+  if (findUserIndex === -1) return response.sendStatus(404);
+
+  users[findUserIndex] = { id: parsedId, ...body };
+  return response.sendStatus(200);
+});
+
+// Patch Requests
+/* Като put но ни позволява да ъпдейтнем дадена част. А не всичко.
+ */
+
+app.patch("/users/:id", (request, response) => {
   const {
     body,
     params: { id },
   } = request;
 
   const parsedId = parseInt(id);
-  if(isNaN(parsedId)) return response.sendStatus(404);
-  
-  const findUserIndex = users.findIndex((user) => user.id === parsedId) // 0 ili -1
+  if (isNaN(parsedId)) return response.sendStatus(404);
+  const findUserIndex = users.findIndex((user) => user.id === parsedId); // 0 ili -1
+  if (findUserIndex === -1) return response.sendStatus(404);
 
-  if(findUserIndex === -1) return response.sendStatus(404);
+  users[findUserIndex] = { ...users[findUserIndex], ...body}  // Копираме целия обкет
+  // и след това със ...body добавяме това кето искаме да променим 
+  // Пр: { id: 2, username: "Gosho", displayName: "Gogata", "username":"Novo" } 
+  // Така ще пренапишем само username na "Novo"
 
-  users[findUserIndex] = { id: parsedId, ...body }
-  return response.sendStatus(200)
+  return response.sendStatus(200);
 });
