@@ -117,10 +117,31 @@ app.patch("/users/:id", (request, response) => {
   const findUserIndex = users.findIndex((user) => user.id === parsedId); // 0 ili -1
   if (findUserIndex === -1) return response.sendStatus(404);
 
-  users[findUserIndex] = { ...users[findUserIndex], ...body}  // Копираме целия обкет
-  // и след това със ...body добавяме това кето искаме да променим 
-  // Пр: { id: 2, username: "Gosho", displayName: "Gogata", "username":"Novo" } 
+  users[findUserIndex] = { ...users[findUserIndex], ...body }; // Копираме целия обкет
+  // и след това със ...body добавяме това кето искаме да променим
+  // Пр: { id: 2, username: "Gosho", displayName: "Gogata", "username":"Novo" }
   // Така ще пренапишем само username na "Novo"
 
   return response.sendStatus(200);
+});
+
+// Delete Request
+
+app.delete("/users/:id", (request, response) => {
+  const {
+    params: { id },
+  } = request;
+  const parsedId = parseInt(id)
+  if (isNaN(parsedId)) return response.sendStatus(404);
+
+  const userIndex = users.findIndex((user) => user.id === parsedId) 
+  if(userIndex === -1) return response.sendStatus(404);
+
+  /* Трием целия обект Пр: 
+    http://localhost:3000/users/2
+    Трием целия обект от users със индекс 2
+  */
+  users.splice(userIndex, 1);
+
+  return response.sendStatus(200)
 });
