@@ -2,7 +2,7 @@ import express, { request, response } from "express";
 
 const app = express();
 
-app.use(express.json())
+app.use(express.json());
 
 const PORT = process.env.PORT || 3000;
 
@@ -52,11 +52,11 @@ app.get("/users", (request, response) => {
   "username": "koko"}
  */
 app.post("/users", (request, response) => {
-    const { body } = request;
-    const newUser = {id:users[users.length - 1].id + 1, ...body}
-    users.push(newUser)
-    return response.send(newUser) 
-})
+  const { body } = request;
+  const newUser = { id: users[users.length - 1].id + 1, ...body };
+  users.push(newUser);
+  return response.send(newUser);
+});
 
 // Route Params
 app.get("/users/:id", (request, response) => {
@@ -72,4 +72,31 @@ app.get("/users/:id", (request, response) => {
   else {
     return response.send(findUser.username);
   } // Ако сложим 3 след users/ ще ни даде Huliq
+});
+
+// Put Requests
+/* 
+  На мястото на :id пишем индекса на обекта който искаме да променим ПР:2
+  и подаваме put request пр: 
+  {
+  "username": "Gogo",
+  "displayName":"Gogata"
+}
+и така сменямае стойностите. На обект със индекс 2
+*/
+app.put("/users/:id", (request, response) => {
+  const {
+    body,
+    params: { id },
+  } = request;
+
+  const parsedId = parseInt(id);
+  if(isNaN(parsedId)) return response.sendStatus(404);
+  
+  const findUserIndex = users.findIndex((user) => user.id === parsedId) // 0 ili -1
+
+  if(findUserIndex === -1) return response.sendStatus(404);
+
+  users[findUserIndex] = { id: parsedId, ...body }
+  return response.sendStatus(200)
 });
